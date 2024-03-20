@@ -1,3 +1,6 @@
 .venv/
 .idea/
+backtrader
+.pyc
+__pycache__/
 

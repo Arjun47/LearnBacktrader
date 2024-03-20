@@ -1,8 +1,8 @@
 import datetime
 # from test_strategy import TestStrategy
-from test_strategy_sma import TestStrategy
+from test_strategy2 import TestStrategy
+# from test_strategy_sma import TestStrategy
 import backtrader as bt
-import tkinter
 
 tata_motors = "datas/TATAMOTORS.NS.csv"
 
