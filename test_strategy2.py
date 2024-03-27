@@ -1,18 +1,20 @@
 import backtrader as bt
+import pandas as pd
+import numpy as np
 
 class TestStrategy(bt.Strategy):
 
-    params = (
-        ('myparam', 27,),
-        ('exitbars', 5,),
-    )
+    params = (('ema_short', 9), ('ema_long', 30),)
 
     def log(self, txt, dt=None):
         dt = dt or self.datas[0].datetime.date(0)
         print(f"{dt.isoformat()}, {txt}")
 
     def __init__(self):
-        self.dataclose = self.datas[0].close
+        self.ema_short = bt.indicators.ExponentialMovingAverage(self.data.close, period=self.params.ema_short)
+        self.ema_long = bt.indicators.ExponentialMovingAverage(self.data.close, period=self.params.ema_long)
+
+        self.last_signal = 0
         self.order = None
         self.buyprice = None
         self.buycomm = None
@@ -40,18 +42,12 @@ class TestStrategy(bt.Strategy):
         self.log(f"Operation Profit, GROSS: {trade.pnl}, NET: {trade.pnlcomm}")
 
     def next(self):
-        # self.log(f"Close, {self.dataclose[0]}")
 
-        if self.order:
-            return
-
-        if not self.position:
-
-            if self.dataclose[0] < self.dataclose[-1]:
-                if self.dataclose[-1] < self.dataclose[-2]:
-                    # self.log(f"Buy Create, {self.dataclose[0]}")
-                    self.order = self.buy()
-        else:
-            if len(self) >= (self.bar_executed+ self.params.exitbars):
-                # self.log(f"Sell Create {self.dataclose[0]}")
-                self.order = self.buy()
+        if self.ema_short[0] > self.ema_long[0] and self.last_signal > 0:
+            # If the 9-day EMA crosses above the 30-day EMA and the last signal was a sell, buy
+            self.buy()
+            self.last_signal = 1
+        elif self.ema_short[0] < self.ema_long[0] and self.last_signal <= 0:
+            # If the 9-day EMA crosses below the 30-day EMA and the last signal was a buy, sell
+            self.sell()
+            self.last_signal = -1
