@@ -11,10 +11,10 @@ class TestStrategy(bt.Strategy):
         print(f"{dt.isoformat()}, {txt}")
 
     def __init__(self):
-        self.ema_short = bt.indicators.ExponentialMovingAverage(self.data.close, period=self.params.ema_short)
-        self.ema_long = bt.indicators.ExponentialMovingAverage(self.data.close, period=self.params.ema_long)
+        self.ema_short = bt.indicators.ExponentialMovingAverage(self.datas[0].close, period=self.params.ema_short)
+        self.ema_long = bt.indicators.ExponentialMovingAverage(self.datas[0].close, period=self.params.ema_long)
 
-        self.last_signal = 0
+        self.last_signal = -1
         self.order = None
         self.buyprice = None
         self.buycomm = None
@@ -43,11 +43,12 @@ class TestStrategy(bt.Strategy):
 
     def next(self):
 
-        if self.ema_short[0] > self.ema_long[0] and self.last_signal > 0:
+        if self.ema_short[0]  <= self.ema_long[0] and self.last_signal > 0:
             # If the 9-day EMA crosses above the 30-day EMA and the last signal was a sell, buy
-            self.buy()
-            self.last_signal = 1
-        elif self.ema_short[0] < self.ema_long[0] and self.last_signal <= 0:
-            # If the 9-day EMA crosses below the 30-day EMA and the last signal was a buy, sell
             self.sell()
             self.last_signal = -1
+            
+        elif self.ema_short[0] >= self.ema_long[0] and self.last_signal < 0:
+            # If the 9-day EMA crosses below the 30-day EMA and the last signal was a buy, sell
+            self.buy()
+            self.last_signal = 1
